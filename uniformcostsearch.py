@@ -57,35 +57,93 @@ queue.append(B)
 
 
 class Problem: # used in 'main' when creating an initial problem
-  def __init__(self, initialState):
-    self.initialState = initialState
-    self.operators = [-1,0,1]
+    def __init__(self, initialState):
+        self.initialState = initialState
+        self.operators = [-1,0,1]
+        self.goalState =   [[1, 2, 3],[4, 5, 6],[7, 8, 0]]
 
-  def printBoard(self):
-    for j in range(3): # for every row in board
-        print(str(self.initialState[j][0]) + ' ' + str(self.initialState[j][1]) + ' ' + str(self.initialState[j][2]))
+    def printBoard(self):
+        for j in range(3): # for every row in board
+            print(str(self.initialState[j][0]) + ' ' + str(self.initialState[j][1]) + ' ' + str(self.initialState[j][2]))
 
-Problem1 = Problem(A)
-Problem1.printBoard()
+    def goalTest(self, currState):
+        if currState == self.goalState:
+            return True
+
+
+# Problem1 = Problem(A)
+# Problem1.printBoard()
 # Board2 = Problem(B)
 # Board2.printBoard()
 
 class Node:
     def __init__(self, initialState):
         self.state = initialState
+        self.dimension = len(initialState[0])
+        # print("self.dimension: " + str(self.dimension))
     
     # def makeNode(self):
 
+class NodeQueue:
+    def __init__(self, initialNode):
+        self.queue = []
+        self.queue.append(initialNode)
+        # print("self.queue: " + str(self.queue[0]))
+        
+    # def makeQueue(self):
+    #     return self.queue
+
+def queueingFunction(prevNodes, newNodes):
+    print("pushes the new nodes onto the queue")
+
+def findBlank(state):
+    listNum = 0
+    indexNum = 0
+    for list in state:
+        for index in list:
+            if index == 0:
+                # print("indexNum: " + str(indexNum))
+                # print("listNum: " + str(listNum))
+                return [listNum, indexNum]
+            indexNum = indexNum + 1
+        listNum = listNum + 1
+        indexNum = 0
+
+def expand(node):
+    # Still don't know what the operators are...
+    # I think the ops are the type of heuristic used
+    # returns a list of states, at most 4, at least 2
+    blankLocation = findBlank(node.state)
+    print("blankLocation: " + str(blankLocation))
+    print("node dimension: " + str(node.dimension))
+
+# A = [[1, 2, 3], 
+#     [4, 5, 6],
+#     [7, 8, 0]]
 
 
-
-def generalSearch(Problem1, queueingFunction):
+def generalSearch(Problem, queueingFunctionFlag):
     rootNode = Node(Problem.initialState)
-    nodes = makeQueue(makeNode(problem.initialState))
+    print("rootNode: " + str(rootNode.state))
 
-    while nodes:
-        node = nodes.pop()
-        if (node == checkGoalState(node.state)):
-            return node
-        nodes = queueingFunction(nodes, expand(node)) # need to add problem.operators but still confused
-    return Failure
+    nodes = NodeQueue(rootNode)
+    print("Queue: " + str(nodes.queue[0].state))
+
+    expand(rootNode)
+    
+    # currNode = nodes.queue.pop()    
+    # print("currNode: " + str(currNode.state))
+
+    # print(len(nodes.queue))
+    # while nodes:                                                            # While the queue of nodes is not empty
+    #     currNode = nodes.queue.pop()                                        # Gets the top node off of the queue
+    #     if Problem.goalTest(currNode):
+    #         return currNode
+    #     nodes = queueingFunction(nodes, expand(currNode, Problem.operators))    # need to add problem.operators but still confused
+    # return Failure
+
+
+
+Problem = Problem(A)
+# endNode = generalSearch(Problem, "uniform")
+generalSearch(Problem, "uniform")
