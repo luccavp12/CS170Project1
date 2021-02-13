@@ -88,13 +88,22 @@ class Problem: # used in 'main' when creating an initial problem
 
 class Node:
     def __init__(self, initialState):
+        self.goalState = [[1, 2, 3], 
+                         [4, 5, 6],
+                         [7, 8, 0]]
         self.state = initialState
         self.dimension = len(initialState[0])
         self.depth = 0                                  # can increment every time another one is created
         self.heuristic = 0                              # used in the heuristic
+        
     def printBoard(self):
         for j in range(3):                              # for every row in board
             print(str(self.state[j][0]) + ' ' + str(self.state[j][1]) + ' ' + str(self.state[j][2]))
+
+    def misplacedTile(self):
+        #Calculates the misplaced tile heuristic
+        print("misplaced tile ")
+
 
 class NodeQueue:
     def __init__(self, initialNode):
@@ -148,16 +157,19 @@ def queueingFunction(flag, prevNodes, newNodes):
     # print("duplicates:")
     # for k in duplicates:
     #     print(str(k))
+    for i in newNodes:
+        if i.state in duplicates:
+            newNodes.remove(i)
+        else:
+            duplicates.append(i.state)
+    prevNodes.concat(newNodes)
     if flag == 1:
-        for i in newNodes:
-            if i.state in duplicates:
-                newNodes.remove(i)
-            else:
-                duplicates.append(i.state)
-        prevNodes.concat(newNodes)
         return prevNodes
     elif flag == 2:
         print("TODO: misplaced tile function")
+        for j in prevNodes.queue:
+            h = j.misplacedTile()
+            f = h + j.depth
     elif flag == 3:
         print("TODO: manhattan distance function")
 
