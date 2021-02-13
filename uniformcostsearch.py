@@ -24,6 +24,10 @@ E = [[1, 2, 3],
     [4, 5, 6],
     [7, 0, 8]]
 
+F = [[1, 2, 3], 
+    [5, 0, 6],
+    [4, 7, 8]]
+
 # queue.append(A)
 # queue.append(B)
 
@@ -73,14 +77,17 @@ E = [[1, 2, 3],
 class Problem: # used in 'main' when creating an initial problem
     def __init__(self, initialState):
         self.initialState = initialState
+        self.dimension = len(initialState[0])
         self.operators = [[-1,0], [1, 0], [0,-1], [0,1]]
         self.goalState = [[1, 2, 3], 
                          [4, 5, 6],
                          [7, 8, 0]]
 
     def printBoard(self):
-        for j in range(3): # for every row in board
-            print(str(self.initialState[j][0]) + ' ' + str(self.initialState[j][1]) + ' ' + str(self.initialState[j][2]))
+        for i in range(self.dimension):                              # for every row in board
+            for j in range(self.dimension):
+                print(str(self.initialState[i][j]) + ' ', end='')
+            print('')
 
     def goalTest(self, currState):
         if currState == self.goalState:
@@ -93,16 +100,48 @@ class Node:
                          [7, 8, 0]]
         self.state = initialState
         self.dimension = len(initialState[0])
-        self.depth = 0                                  # can increment every time another one is created
-        self.heuristic = 0                              # used in the heuristic
+        self.g = 0                                  # can increment every time another one is created
+        self.h = 0                                  # used in the heuristic
+        self.f = 0
         
     def printBoard(self):
-        for j in range(3):                              # for every row in board
-            print(str(self.state[j][0]) + ' ' + str(self.state[j][1]) + ' ' + str(self.state[j][2]))
+        for i in range(self.dimension):                              # for every row in board
+            for j in range(self.dimension):
+                print(str(self.state[i][j]) + ' ', end='')
+            print('')
+
+    def calcF(self):
+        self.f = self.h + self.g
 
     def misplacedTile(self):
-        #Calculates the misplaced tile heuristic
-        print("misplaced tile ")
+        # Calculates the misplaced tile heuristic
+        print("Misplaced Tile")
+        for i in range(self.dimension):                              # for every row in board
+            for j in range(self.dimension):
+                if self.state[i][j] != self.goalState[i][j]:
+                    self.h = self.h + 1
+        self.h = self.h - 1
+
+    def manhattanDistance(self):
+        # Calculates the Manhattan Distance heuristic
+        print("Manhattan Distance")
+        print("Goalstate:  " + str(self.goalState))
+        print("self.state: " + str(self.state))
+        for i in range(self.dimension):
+            for j in range(self.dimension):
+                if (self.state[i][j] != self.goalState[i][j]) and (self.state[i][j] != 0): 
+                    print("found the incorrect number: " + str(self.state[i][j]))
+                    print("it is supposed to be: " + str(self.goalState[i][j]))
+                    goalLocation = findNum(self.goalState, self.state[i][j])    # goalLocation is the location on the goalstate of the number we have
+                    print("goalLocation: " + str(goalLocation))
+                    #Subtrack self.state[i][j] - goalLocation
+                    difference = [i - goalLocation[0], j - goalLocation[1]]
+                    #abs value of difference list
+                    difference[0] = abs(difference[0])
+                    difference[1] = abs(difference[1])
+                    #add both list items together
+                    self.h = difference[0] + difference[1]
+                    print("self.h for Manhattan Distance: " + str(self.h))
 
 
 class NodeQueue:
@@ -119,12 +158,12 @@ class NodeQueue:
         concatination = newNodes + self.queue
         self.queue = concatination
 
-def findBlank(state):
+def findNum(state, num):                                # Returns the location in a list of the number and state passed in
     listNum = 0
     indexNum = 0
     for list in state:
         for index in list:
-            if index == 0:
+            if index == num:
                 return [listNum, indexNum]
             indexNum = indexNum + 1
         listNum = listNum + 1
@@ -134,7 +173,7 @@ def expand(node, operators):
     max = node.dimension - 1
     children = []
     swaps = []                                                      # New positions that blank can go to
-    blankLocation = findBlank(node.state)
+    blankLocation = findNum(node.state, 0)
 
     for move in operators:
         x = blankLocation[0] - move[0]
@@ -143,7 +182,7 @@ def expand(node, operators):
             swaps.append([x,y])
     for i in swaps:                                                 # For every new location the blank can go to
         child = copy.deepcopy(node)                                 # Creates a deepcopy of the passed in node
-        child.depth = child.depth + 1                               # Adds to depth as it is a new child on the tree
+        child.g = child.g + 1                               # Adds to depth as it is a new child on the tree
 
         tempVal = child.state[i[0]][i[1]]                           # Saves the value on the board that the blank is switching with
         child.state[i[0]][i[1]] = 0                                 # Sets the switched possition to blank value (0) and sets 
@@ -163,18 +202,26 @@ def queueingFunction(flag, prevNodes, newNodes):
         else:
             duplicates.append(i.state)
     prevNodes.concat(newNodes)
+    # print("prevNodes:")
+    # prevNodes.printBoard()
     if flag == 1:
         return prevNodes
     elif flag == 2:
-        print("TODO: misplaced tile function")
+        # print("TODO: misplaced tile function")
         for j in prevNodes.queue:
-            h = j.misplacedTile()
-            f = h + j.depth
+            j.misplacedTile()
+            j.calcF()
+            return prevNodes
     elif flag == 3:
-        print("TODO: manhattan distance function")
+        # print("TODO: manhattan distance function")
+        for j in reversed(prevNodes.queue):
+            # print("j: " + str(j.state))
+            j.manhattanDistance()
+            j.calcF()
+            return prevNodes
 
-def generalSearch(Problem, queueingFunctionFlag):
-    rootNode = Node(Problem.initialState)
+def generalSearch(Problem, queueingFunctionFlag):   # Could pass the queinngFunctionFlag as an attribute of problem, 
+    rootNode = Node(Problem.initialState)           # and when you make the root node make it an attribute of Node
     print("rootNode: " + str(rootNode.state))
 
     nodes = NodeQueue(rootNode)
@@ -190,16 +237,15 @@ def generalSearch(Problem, queueingFunctionFlag):
             return currNode
         nodes = queueingFunction(queueingFunctionFlag, nodes, expand(currNode, Problem.operators))    # need to add problem.operators but still confused
         x = x + 1
-        # print("queueingFunction called")
     return False
 
 
-Problem = Problem(D)
+Problem = Problem(B)
 duplicates = [Problem.initialState]
 
-Result = generalSearch(Problem, 1)
+Result = generalSearch(Problem, 3)
 if Result == False:
     print("Failed to find a solution")
 else:
     Result.printBoard()
-    print("Result.depth: " + str(Result.depth))
+    print("Result.depth: " + str(Result.g))
