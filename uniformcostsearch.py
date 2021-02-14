@@ -1,8 +1,6 @@
-# This is the code for the uniform cost search (A* with h(n) hardocded to equal zero)
+import time
 import copy
 from copy import deepcopy
-
-queue = []
 
 A = [[1, 2, 3], # 0
     [4, 5, 6],
@@ -40,7 +38,7 @@ I = [[8, 6, 7], # 31
     [2, 5, 4],
     [3, 0, 1]]
 
-class Problem: # used in 'main' when creating an initial problem
+class Problem:
     def __init__(self, initialState):
         self.initialState = initialState
         self.dimension = len(initialState[0])
@@ -238,17 +236,21 @@ def generalSearch(Problem, queueingFunctionFlag):   # Could pass the queinngFunc
         x = x + 1
     return False
 
-Problem = Problem(G)
+Problem = Problem(I)
 duplicates = [Problem.initialState]
 maxQueueLength = 0
 
-Result = generalSearch(Problem, 1)
+t0 = time.time()
+Result = generalSearch(Problem, 3)
+t1 = time.time()
+totalTime = t1-t0
 if Result == False:
     print("Failed to find a solution")
 else:
     Result.printBoard()
     print("Result.depth: " + str(Result.g))
     print("Max Queue Length: " + str(maxQueueLength))
+    print("Time elapsed: " + str(totalTime))
     
 # A = [[1, 2, 3], # 0
 #     [4, 5, 6],
