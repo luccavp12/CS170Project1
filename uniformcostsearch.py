@@ -28,6 +28,10 @@ F = [[1, 2, 3],
     [5, 0, 6],
     [4, 7, 8]]
 
+G = [[1, 6, 7], 
+    [5, 0, 3],
+    [4, 8, 2]]
+
 # queue.append(A)
 # queue.append(B)
 
@@ -105,6 +109,9 @@ class Node:
         self.f = 0
         
     def printBoard(self):
+        print('g: ' + str(self.g))
+        print('h: ' + str(self.h))
+        print('f: ' + str(self.f))
         for i in range(self.dimension):                              # for every row in board
             for j in range(self.dimension):
                 print(str(self.state[i][j]) + ' ', end='')
@@ -115,7 +122,7 @@ class Node:
 
     def misplacedTile(self):
         # Calculates the misplaced tile heuristic
-        print("Misplaced Tile")
+        # print("Misplaced Tile")
         for i in range(self.dimension):                              # for every row in board
             for j in range(self.dimension):
                 if self.state[i][j] != self.goalState[i][j]:
@@ -124,39 +131,53 @@ class Node:
 
     def manhattanDistance(self):
         # Calculates the Manhattan Distance heuristic
-        print("Manhattan Distance")
-        print("Goalstate:  " + str(self.goalState))
-        print("self.state: " + str(self.state))
+        # print("Manhattan Distance")
+        # print("Goalstate:  " + str(self.goalState))
+        # print("self.state: " + str(self.state))
         for i in range(self.dimension):
             for j in range(self.dimension):
                 if (self.state[i][j] != self.goalState[i][j]) and (self.state[i][j] != 0): 
-                    print("found the incorrect number: " + str(self.state[i][j]))
-                    print("it is supposed to be: " + str(self.goalState[i][j]))
+                    # print("found the incorrect number: " + str(self.state[i][j]))
+                    # print("it is supposed to be: " + str(self.goalState[i][j]))
                     goalLocation = findNum(self.goalState, self.state[i][j])    # goalLocation is the location on the goalstate of the number we have
-                    print("goalLocation: " + str(goalLocation))
+                    # print("goalLocation: " + str(goalLocation))
                     #Subtrack self.state[i][j] - goalLocation
                     difference = [i - goalLocation[0], j - goalLocation[1]]
                     #abs value of difference list
                     difference[0] = abs(difference[0])
                     difference[1] = abs(difference[1])
                     #add both list items together
-                    self.h = difference[0] + difference[1]
-                    print("self.h for Manhattan Distance: " + str(self.h))
+                    self.h = self.h + (difference[0] + difference[1])
+                    # print("self.h for Manhattan Distance: " + str(self.h))
 
 
 class NodeQueue:
     def __init__(self, initialNode):
         self.queue = []
         self.queue.append(initialNode)
+        self.queueLength = len(self.queue) 
         
     def printBoard(self):
         for i in self.queue:
+            print('g: ' + str(i.g))
+            print('h: ' + str(i.h))
+            print('f: ' + str(i.f))        
             for j in range(3):                          # for every row in board
                 print(str(i.state[j][0]) + ' ' + str(i.state[j][1]) + ' ' + str(i.state[j][2]))
         
     def concat(self, newNodes):
         concatination = newNodes + self.queue
         self.queue = concatination
+    
+    def maxQueueLength(self):
+        global maxQueueLength
+        print("maxQueueLength: " + str(maxQueueLength))
+        print("self.queueLength: " + str(self.queueLength))
+        if self.queueLength > maxQueueLength:
+            maxQueueLength = self.queueLength
+
+def maxQueue(length):
+    
 
 def findNum(state, num):                                # Returns the location in a list of the number and state passed in
     listNum = 0
@@ -211,14 +232,20 @@ def queueingFunction(flag, prevNodes, newNodes):
         for j in prevNodes.queue:
             j.misplacedTile()
             j.calcF()
-            return prevNodes
+        prevNodes.queue.sort(key=lambda j: j.f, reverse=True)
+        # print("prevNodes:")
+        # prevNodes.printBoard()
+        return prevNodes
     elif flag == 3:
         # print("TODO: manhattan distance function")
-        for j in reversed(prevNodes.queue):
+        for j in prevNodes.queue:
             # print("j: " + str(j.state))
             j.manhattanDistance()
-            j.calcF()
-            return prevNodes
+            j.calcF()       
+        prevNodes.queue.sort(key=lambda j: j.f, reverse=True)
+        # print("prevNodes:")
+        # prevNodes.printBoard()
+        return prevNodes
 
 def generalSearch(Problem, queueingFunctionFlag):   # Could pass the queinngFunctionFlag as an attribute of problem, 
     rootNode = Node(Problem.initialState)           # and when you make the root node make it an attribute of Node
@@ -236,16 +263,24 @@ def generalSearch(Problem, queueingFunctionFlag):   # Could pass the queinngFunc
             print("interation: " + str(x))
             return currNode
         nodes = queueingFunction(queueingFunctionFlag, nodes, expand(currNode, Problem.operators))    # need to add problem.operators but still confused
+        
+        maxQueueLength(len(nodes.queue))
+        # nodes.maxQueueLength()
+        # print("nodes.queue.length: " + str(len(nodes.queue)))
+        # print("nodes.printBoard(): ")
+        # nodes.printBoard()
         x = x + 1
     return False
 
 
 Problem = Problem(B)
 duplicates = [Problem.initialState]
+maxQueueLength = 0
 
-Result = generalSearch(Problem, 3)
+Result = generalSearch(Problem, 1)
 if Result == False:
     print("Failed to find a solution")
 else:
     Result.printBoard()
     print("Result.depth: " + str(Result.g))
+    print("Max Queue Length: " + str(maxQueueLength))
