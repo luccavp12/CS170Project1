@@ -4,79 +4,41 @@ from copy import deepcopy
 
 queue = []
 
-A = [[1, 2, 3], 
+A = [[1, 2, 3], # 0
     [4, 5, 6],
     [7, 8, 0]]
 
 B = [[1, 2, 3], 
-    [4, 5, 6],
+    [4, 5, 6],  # 2
     [0, 7, 8]]
 
 C = [[1, 2, 3], 
-    [4, 0, 6],
-    [7, 5, 8]]
-
-D = [[0, 1, 3], 
-    [4, 2, 6],
-    [7, 5, 8]]
-
-E = [[1, 2, 3], 
-    [4, 5, 6],
-    [7, 0, 8]]
-
-F = [[1, 2, 3], 
-    [5, 0, 6],
+    [5, 0, 6],  # 4
     [4, 7, 8]]
 
-G = [[1, 6, 7], 
+D = [[1, 3, 6], 
+    [5, 0, 2],  # 8
+    [4, 7, 8]]
+
+E = [[1, 3, 6], 
+    [5, 0, 7],  # 12
+    [4, 8, 2]]
+
+F = [[1, 6, 7], # 16
     [5, 0, 3],
     [4, 8, 2]]
 
-# queue.append(A)
-# queue.append(B)
+G = [[7, 1, 2], 
+    [4, 8, 5],  # 20
+    [6, 3, 0]]
 
-# for i in range(len(queue)): #for every board in the queue
-#     for j in range(3): #for every row in board
-#             print(str(queue[i][j][0]) + ' ' + str(queue[i][j][1]) + ' ' + str(queue[i][j][2])) 
-#     print('----------')
-    
-# print(queue)
+H = [[0, 7, 2], # 24
+    [4, 6, 1],
+    [3, 5, 8]]
 
-# print (str(queue[i]))
-# print("A[0][0]: " + str(A[0][0]))
-
-
-# function general-search(problem, QUEUEING-FUNCTION)
-#     nodes = MAKE-QUEUE(MAKE-NODE(problem.INITIAL-STATE))
-  
-#     loop do
-#         if EMPTY(nodes) then return "Failure" # We have proved there is no solution  
-#         node = REMOVE-FRONT(nodes) 
-#         if problem.GOAL-TEST(node.STATE) succeeds then return node 
-#         nodes = QUEUEING-FUNCTION(nodes,EXPAND(node,problem.OPERATORS))  
-#     end loop
-
-########################################################
-
-# class problem:
-#     initialState = []
-
-# def queueingFunction():
-#     print("TODO")
-    ## combine the passed in queue, and add to it the expansion of the current node
-
-# def expand(node): #need to add problem.operators, but confused as to what operators there are
-#     print("TODO")
-
-# def makeNode(node):
-#     print("TODO")
-    # return single matrix/list
-
-# def makeQueue():
-#     print("TODO")
-    # return queue that contains a single list as the initial state
-
-
+I = [[8, 6, 7], # 31
+    [2, 5, 4],
+    [3, 0, 1]]
 
 class Problem: # used in 'main' when creating an initial problem
     def __init__(self, initialState):
@@ -123,39 +85,37 @@ class Node:
     def misplacedTile(self):
         # Calculates the misplaced tile heuristic
         # print("Misplaced Tile")
+        hVal = 0
         for i in range(self.dimension):                              # for every row in board
             for j in range(self.dimension):
                 if self.state[i][j] != self.goalState[i][j]:
-                    self.h = self.h + 1
-        self.h = self.h - 1
+                    hVal = hVal + 1
+        self.h = hVal - 1
 
     def manhattanDistance(self):
         # Calculates the Manhattan Distance heuristic
-        # print("Manhattan Distance")
-        # print("Goalstate:  " + str(self.goalState))
-        # print("self.state: " + str(self.state))
+
+        hVal = 0
         for i in range(self.dimension):
             for j in range(self.dimension):
                 if (self.state[i][j] != self.goalState[i][j]) and (self.state[i][j] != 0): 
-                    # print("found the incorrect number: " + str(self.state[i][j]))
-                    # print("it is supposed to be: " + str(self.goalState[i][j]))
                     goalLocation = findNum(self.goalState, self.state[i][j])    # goalLocation is the location on the goalstate of the number we have
-                    # print("goalLocation: " + str(goalLocation))
+
                     #Subtrack self.state[i][j] - goalLocation
                     difference = [i - goalLocation[0], j - goalLocation[1]]
+
                     #abs value of difference list
                     difference[0] = abs(difference[0])
                     difference[1] = abs(difference[1])
-                    #add both list items together
-                    self.h = self.h + (difference[0] + difference[1])
-                    # print("self.h for Manhattan Distance: " + str(self.h))
 
+                    #add both list items together
+                    hVal = hVal + (difference[0] + difference[1])                    
+        self.h = hVal
 
 class NodeQueue:
     def __init__(self, initialNode):
         self.queue = []
-        self.queue.append(initialNode)
-        self.queueLength = len(self.queue) 
+        self.queue.append(initialNode) 
         
     def printBoard(self):
         for i in self.queue:
@@ -168,16 +128,11 @@ class NodeQueue:
     def concat(self, newNodes):
         concatination = newNodes + self.queue
         self.queue = concatination
-    
-    def maxQueueLength(self):
-        global maxQueueLength
-        print("maxQueueLength: " + str(maxQueueLength))
-        print("self.queueLength: " + str(self.queueLength))
-        if self.queueLength > maxQueueLength:
-            maxQueueLength = self.queueLength
 
 def maxQueue(length):
-    
+    global maxQueueLength
+    if length > maxQueueLength:
+        maxQueueLength = length
 
 def findNum(state, num):                                # Returns the location in a list of the number and state passed in
     listNum = 0
@@ -222,29 +177,44 @@ def queueingFunction(flag, prevNodes, newNodes):
             newNodes.remove(i)
         else:
             duplicates.append(i.state)
-    prevNodes.concat(newNodes)
+    
     # print("prevNodes:")
     # prevNodes.printBoard()
     if flag == 1:
+        prevNodes.concat(newNodes)
         return prevNodes
     elif flag == 2:
         # print("TODO: misplaced tile function")
-        for j in prevNodes.queue:
+        for j in newNodes:
             j.misplacedTile()
             j.calcF()
+
+        prevNodes.concat(newNodes)
         prevNodes.queue.sort(key=lambda j: j.f, reverse=True)
         # print("prevNodes:")
         # prevNodes.printBoard()
         return prevNodes
     elif flag == 3:
         # print("TODO: manhattan distance function")
-        for j in prevNodes.queue:
+        for j in newNodes:
             # print("j: " + str(j.state))
             j.manhattanDistance()
             j.calcF()       
+        
+        prevNodes.concat(newNodes)
         prevNodes.queue.sort(key=lambda j: j.f, reverse=True)
         # print("prevNodes:")
         # prevNodes.printBoard()
+        # print("winner's f:" + str((prevNodes.queue[-1]).f))
+        winnerF = (prevNodes.queue[-1]).f
+        tieBreakers = []
+        for k in reversed(prevNodes.queue):
+            if k.f == winnerF:
+                tieBreakers.append(prevNodes.queue.pop())
+            else:
+                break
+        tieBreakers.sort(key=lambda j: j.g, reverse=True)
+        prevNodes.queue = prevNodes.queue + tieBreakers
         return prevNodes
 
 def generalSearch(Problem, queueingFunctionFlag):   # Could pass the queinngFunctionFlag as an attribute of problem, 
@@ -263,17 +233,12 @@ def generalSearch(Problem, queueingFunctionFlag):   # Could pass the queinngFunc
             print("interation: " + str(x))
             return currNode
         nodes = queueingFunction(queueingFunctionFlag, nodes, expand(currNode, Problem.operators))    # need to add problem.operators but still confused
-        
-        maxQueueLength(len(nodes.queue))
-        # nodes.maxQueueLength()
-        # print("nodes.queue.length: " + str(len(nodes.queue)))
-        # print("nodes.printBoard(): ")
-        # nodes.printBoard()
+
+        maxQueue(len(nodes.queue))
         x = x + 1
     return False
 
-
-Problem = Problem(B)
+Problem = Problem(G)
 duplicates = [Problem.initialState]
 maxQueueLength = 0
 
@@ -284,3 +249,39 @@ else:
     Result.printBoard()
     print("Result.depth: " + str(Result.g))
     print("Max Queue Length: " + str(maxQueueLength))
+    
+# A = [[1, 2, 3], # 0
+#     [4, 5, 6],
+#     [7, 8, 0]]
+
+# B = [[1, 2, 3], 
+#     [4, 5, 6],  # 2
+#     [0, 7, 8]]
+
+# C = [[1, 2, 3], 
+#     [5, 0, 6],  # 4
+#     [4, 7, 8]]
+
+# D = [[1, 3, 6], 
+#     [5, 0, 2],  # 8
+#     [4, 7, 8]]
+
+# E = [[1, 3, 6], 
+#     [5, 0, 7],  # 12
+#     [4, 8, 2]]
+
+# F = [[1, 6, 7], # 16
+#     [5, 0, 3],
+#     [4, 8, 2]]
+
+# G = [[7, 1, 2], 
+#     [4, 8, 5],  # 20
+#     [6, 3, 0]]
+
+# H = [[0, 7, 2], # 24
+#     [4, 6, 1],
+#     [3, 5, 8]]
+
+# I = [[8, 6, 7], # 31
+#     [2, 5, 4],
+#     [3, 0, 1]]
