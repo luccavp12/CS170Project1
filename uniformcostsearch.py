@@ -2,42 +2,6 @@ import time
 import copy
 from copy import deepcopy
 
-A = [[1, 2, 3], # 0
-    [4, 5, 6],
-    [7, 8, 0]]
-
-B = [[1, 2, 3], 
-    [4, 5, 6],  # 2
-    [0, 7, 8]]
-
-C = [[1, 2, 3], 
-    [5, 0, 6],  # 4
-    [4, 7, 8]]
-
-D = [[1, 3, 6], 
-    [5, 0, 2],  # 8
-    [4, 7, 8]]
-
-E = [[1, 3, 6], 
-    [5, 0, 7],  # 12
-    [4, 8, 2]]
-
-F = [[1, 6, 7], # 16
-    [5, 0, 3],
-    [4, 8, 2]]
-
-G = [[7, 1, 2], 
-    [4, 8, 5],  # 20
-    [6, 3, 0]]
-
-H = [[0, 7, 2], # 24
-    [4, 6, 1],
-    [3, 5, 8]]
-
-I = [[8, 6, 7], # 31
-    [2, 5, 4],
-    [3, 0, 1]]
-
 class Problem:
     def __init__(self, initialState):
         self.initialState = initialState
@@ -81,8 +45,6 @@ class Node:
         self.f = self.h + self.g
 
     def misplacedTile(self):
-        # Calculates the misplaced tile heuristic
-        # print("Misplaced Tile")
         hVal = 0
         for i in range(self.dimension):                              # for every row in board
             for j in range(self.dimension):
@@ -91,8 +53,6 @@ class Node:
         self.h = hVal - 1
 
     def manhattanDistance(self):
-        # Calculates the Manhattan Distance heuristic
-
         hVal = 0
         for i in range(self.dimension):
             for j in range(self.dimension):
@@ -165,45 +125,33 @@ def expand(node, operators):
         children.append(child)                                      # Appends new child to child list
     return children
 
+# queueing function takes in the flag for the chosen algorithm, the current nodes in the queue, and the children nodes
 def queueingFunction(flag, prevNodes, newNodes):
+    # creates a list that stores all of the duplicate states
     global duplicates
-    # print("duplicates:")
-    # for k in duplicates:
-    #     print(str(k))
+    # iterates through the child nodes
     for i in newNodes:
+        # if the current child state in the list of child states is found in the duplicates list, take it out of the child list
         if i.state in duplicates:
             newNodes.remove(i)
         else:
             duplicates.append(i.state)
-    
-    # print("prevNodes:")
-    # prevNodes.printBoard()
     if flag == 1:
         prevNodes.concat(newNodes)
         return prevNodes
     elif flag == 2:
-        # print("TODO: misplaced tile function")
         for j in newNodes:
             j.misplacedTile()
             j.calcF()
-
         prevNodes.concat(newNodes)
         prevNodes.queue.sort(key=lambda j: j.f, reverse=True)
-        # print("prevNodes:")
-        # prevNodes.printBoard()
         return prevNodes
     elif flag == 3:
-        # print("TODO: manhattan distance function")
         for j in newNodes:
-            # print("j: " + str(j.state))
             j.manhattanDistance()
             j.calcF()       
-        
         prevNodes.concat(newNodes)
         prevNodes.queue.sort(key=lambda j: j.f, reverse=True)
-        # print("prevNodes:")
-        # prevNodes.printBoard()
-        # print("winner's f:" + str((prevNodes.queue[-1]).f))
         winnerF = (prevNodes.queue[-1]).f
         tieBreakers = []
         for k in reversed(prevNodes.queue):
@@ -215,75 +163,115 @@ def queueingFunction(flag, prevNodes, newNodes):
         prevNodes.queue = prevNodes.queue + tieBreakers
         return prevNodes
 
-def generalSearch(Problem, queueingFunctionFlag):   # Could pass the queinngFunctionFlag as an attribute of problem, 
-    rootNode = Node(Problem.initialState)           # and when you make the root node make it an attribute of Node
+def generalSearch(Problem, queueingFunctionFlag): 
+    # Create root node with the problem state
+    rootNode = Node(Problem.initialState)          
     print("rootNode: " + str(rootNode.state))
 
+    # Create a queue of Nodes, initialized with the root node
     nodes = NodeQueue(rootNode)
 
+    # x keeps track of the iterations
     x = 0
-    while nodes:                                                                # While the queue of nodes is not empty
-        currNode = nodes.queue.pop()                                            # Gets the top node off of the queue
+    # loops while the nodes list is not empty
+    while nodes:                                                                
+        # pops the top of the queue off and uses that as the current node, this node is also the most efficientg
+        currNode = nodes.queue.pop()                                            
         print("currNode:")
         currNode.printBoard()
+        # checks the current node's state, enters conditional if it is the goal state
         if Problem.goalTest(currNode.state):
             print("Found the goal state!")
             print("interation: " + str(x))
             return currNode
+        # calls the queueing function, passes in the flag for the type of queueing function, the original nodes,
+        # and the expanded children. The expand function uses the current node and the problem operators
         nodes = queueingFunction(queueingFunctionFlag, nodes, expand(currNode, Problem.operators))    # need to add problem.operators but still confused
 
+        # calls maxQueue function which updates maxQueue variable to keep track of the maxQueue
         maxQueue(len(nodes.queue))
+        # increases the iteration
         x = x + 1
     return False
 
-Problem = Problem(I)
-duplicates = [Problem.initialState]
+
+def userInput():
+    # Call global so we can write to the variables
+    global Problem
+    global Result
+    global duplicates
+
+    print("Welcome to Luccap's 8-puzzle solver.Type “1” to use a default puzzle, or “2” to enter your own puzzle.")
+    puzzleSelection = input()
+    puzzleSelection = int(puzzleSelection)
+    if puzzleSelection == 1:
+        algoChoice = input("Enter your choice of algorithm:\n1. Uniform Cost Search\n2. A* with the Misplaced Tile heuristic\n3. A* with the Manhattan distance heuristic\n")
+        # Creates the Problem object by passing in the default game board
+        Problem = Problem(D)
+        # Adds the first state to the list of duplicates
+        duplicates = [Problem.initialState]
+        # Starts program timer
+        t0 = time.time()
+        # Runs general search algorithm and returns the result node/boolean
+        Result = generalSearch(Problem, int(algoChoice))
+        # Ends program timer
+        t1 = time.time()
+        # Calculate time elapsed
+        totalTime = t1-t0
+        print("Time elapsed: " + str(totalTime))
+        return Result
+    elif puzzleSelection == 2:
+        print("Enter your puzzle, use a zero to represent the blank")
+        print("Enter the first row, use space or tabs between numbers")
+        firstRow = input()
+        print("Enter the second row, use space or tabs between numbers")
+        secondRow = input()
+        print("Enter the third row, use space or tabs between numbers")
+        thirdRow = input()
+        
+        # Take string inputs, split them into strings, and then map the strings to ints, finally putting them all in a list
+        x = [list(map(int, firstRow.split())), list(map(int, secondRow.split())), list(map(int, thirdRow.split()))]
+        Problem = Problem(x)
+        duplicates = [Problem.initialState]
+        
+        algoChoice = input("Enter your choice of algorithm:\n1. Uniform Cost Search\n2. A* with the Misplaced Tile heuristic\n3. A* with the Manhattan distance heuristic\n")
+        
+        t0 = time.time()
+        Result = generalSearch(Problem, int(algoChoice))
+        t1 = time.time()
+        totalTime = t1-t0
+        print("Time elapsed: " + str(totalTime))
+        return Result
+
+# Declaring global variables
+Problem
+Result = 0
+duplicates = []
 maxQueueLength = 0
 
-t0 = time.time()
-Result = generalSearch(Problem, 3)
-t1 = time.time()
-totalTime = t1-t0
+# Creating test games of different difficulties
+A = [[1, 2, 3], 
+     [5, 0, 6], # 4 easy
+     [4, 7, 8]]
+
+B = [[1, 3, 6], 
+     [5, 0, 7], # 12 medium
+     [4, 8, 2]]
+
+C = [[0, 7, 2], 
+     [4, 6, 1], # 24 hard
+     [3, 5, 8]]
+
+D = [[8, 6, 7], 
+     [2, 5, 4], # 31 impossible???
+     [3, 0, 1]]
+
+# Run Interface and program, returns a Result of a failure or the goal Node
+Result = userInput()
+
 if Result == False:
     print("Failed to find a solution")
 else:
     Result.printBoard()
     print("Result.depth: " + str(Result.g))
     print("Max Queue Length: " + str(maxQueueLength))
-    print("Time elapsed: " + str(totalTime))
-    
-# A = [[1, 2, 3], # 0
-#     [4, 5, 6],
-#     [7, 8, 0]]
-
-# B = [[1, 2, 3], 
-#     [4, 5, 6],  # 2
-#     [0, 7, 8]]
-
-# C = [[1, 2, 3], 
-#     [5, 0, 6],  # 4
-#     [4, 7, 8]]
-
-# D = [[1, 3, 6], 
-#     [5, 0, 2],  # 8
-#     [4, 7, 8]]
-
-# E = [[1, 3, 6], 
-#     [5, 0, 7],  # 12
-#     [4, 8, 2]]
-
-# F = [[1, 6, 7], # 16
-#     [5, 0, 3],
-#     [4, 8, 2]]
-
-# G = [[7, 1, 2], 
-#     [4, 8, 5],  # 20
-#     [6, 3, 0]]
-
-# H = [[0, 7, 2], # 24
-#     [4, 6, 1],
-#     [3, 5, 8]]
-
-# I = [[8, 6, 7], # 31
-#     [2, 5, 4],
-#     [3, 0, 1]]
