@@ -228,8 +228,8 @@ def generalSearch(Problem, queueingFunctionFlag):
     while nodes:                                                                
         # pops the top of the queue off and uses that as the current node, this node is also the most efficientg
         currNode = nodes.queue.pop()                                            
-        # print("currNode:")
-        # currNode.printBoard()
+        print("currNode:")
+        currNode.printBoard()
         # checks the current node's state, enters conditional if it is the goal state
         if Problem.goalTest(currNode.state):
             print("Found the goal state!")
@@ -252,7 +252,7 @@ def userInput():
     global Result
     global duplicates
 
-    print("Welcome to Luccap's 8-puzzle solver.Type “1” to use a default puzzle, or “2” to enter your own puzzle.")
+    print("Welcome to Luccap's 8-puzzle solver. Type “1” to use a default puzzle, or “2” to enter your own puzzle.")
     puzzleSelection = input()
     puzzleSelection = int(puzzleSelection)
     if puzzleSelection == 1:
