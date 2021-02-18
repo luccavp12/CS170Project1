@@ -2,6 +2,10 @@ import time
 import copy
 from copy import deepcopy
 
+# Problem object contains the user input state, or the defaul state. Also calculates the dimension of the board, and defined the possible blank space
+# moves and goal state.
+# printBoard() prints the user input/default state
+# goalTest() compares the passed in state to the goal state and returns True if they match
 class Problem:
     def __init__(self, initialState):
         self.initialState = initialState
@@ -21,6 +25,11 @@ class Problem:
         if currState == self.goalState:
             return True
 
+# Node object contains the goal state, the current state, the dimension of the game board, the depth, heuristic, and f(n) value
+# printboard() prints the current node, the depth, the heuristic, and the f(n)
+# calcF() sums the depth and the heuristic and sets the value to f
+# misplacedTile() calculates the heuristic via misplaced tile
+# manhattanDistance() calculates the heuristic via manhattan distance
 class Node:
     def __init__(self, initialState):
         self.goalState = [[1, 2, 3], 
@@ -28,15 +37,15 @@ class Node:
                          [7, 8, 0]]
         self.state = initialState
         self.dimension = len(initialState[0])
-        self.g = 0                                  # can increment every time another one is created
-        self.h = 0                                  # used in the heuristic
+        self.g = 0                                  
+        self.h = 0                                  
         self.f = 0
         
     def printBoard(self):
         print('g: ' + str(self.g))
         print('h: ' + str(self.h))
         print('f: ' + str(self.f))
-        for i in range(self.dimension):                              # for every row in board
+        for i in range(self.dimension):                              
             for j in range(self.dimension):
                 print(str(self.state[i][j]) + ' ', end='')
             print('')
@@ -46,10 +55,12 @@ class Node:
 
     def misplacedTile(self):
         hVal = 0
-        for i in range(self.dimension):                              # for every row in board
+        # for every tile not matching the goal state, increment hVal
+        for i in range(self.dimension):                              
             for j in range(self.dimension):
                 if self.state[i][j] != self.goalState[i][j]:
                     hVal = hVal + 1
+        # since the heuristic is not supposed to contain the blank space, decrease it by one in the end
         self.h = hVal - 1
 
     def manhattanDistance(self):
@@ -70,6 +81,9 @@ class Node:
                     hVal = hVal + (difference[0] + difference[1])                    
         self.h = hVal
 
+# NodeQueue object, contains a queue of nodes
+# printBoard() prints all of the nodes in the queue
+# concat() updates the queue to be the concatination of it with the new list of nodes
 class NodeQueue:
     def __init__(self, initialNode):
         self.queue = []
@@ -87,12 +101,14 @@ class NodeQueue:
         concatination = newNodes + self.queue
         self.queue = concatination
 
+# checks if the queue length has grown, and if it has, updates the global max variable
 def maxQueue(length):
     global maxQueueLength
     if length > maxQueueLength:
         maxQueueLength = length
 
-def findNum(state, num):                                # Returns the location in a list of the number and state passed in
+# returns the location of the passed in number in a list of lists
+def findNum(state, num):                                
     listNum = 0
     indexNum = 0
     for list in state:
@@ -103,26 +119,38 @@ def findNum(state, num):                                # Returns the location i
         listNum = listNum + 1
         indexNum = 0
 
+# expand function returns a list of all of the possible legal child expansions of the node passed in
 def expand(node, operators):
+    # calculates the furthest index of the list
     max = node.dimension - 1
+    # children will be the list of nodes that is returned
     children = []
-    swaps = []                                                      # New positions that blank can go to
+    # swaps will contain all of the coordinate locations of the legal moves
+    swaps = []                                                      
+    # blankLocation is a list of 2 integers which show the location of the blank space
     blankLocation = findNum(node.state, 0)
-
+    # operators are all of the legal moves the blank could make (up, down, left, and right)
     for move in operators:
         x = blankLocation[0] - move[0]
         y = blankLocation[1] - move[1]
+        # checks if the calculated move is on the game board
         if (x >= 0 and x <= max) and (y >= 0 and y <= max):
+            # if it is a legal move, the move's coordinates are added to swaps
             swaps.append([x,y])
-    for i in swaps:                                                 # For every new location the blank can go to
-        child = copy.deepcopy(node)                                 # Creates a deepcopy of the passed in node
-        child.g = child.g + 1                               # Adds to depth as it is a new child on the tree
+    # for every new location the blank can go to
+    for i in swaps:                                                 
+        # creates a deepcopy of the passed in node
+        child = copy.deepcopy(node)                                 
+        # increments depth beacuse it is a new child node
+        child.g = child.g + 1                               
 
-        tempVal = child.state[i[0]][i[1]]                           # Saves the value on the board that the blank is switching with
-        child.state[i[0]][i[1]] = 0                                 # Sets the switched possition to blank value (0) and sets 
-        child.state[blankLocation[0]][blankLocation[1]] = tempVal   # Sets the original blank spot to temp value, indicating a switch has taken place
+        # swaps the value on the game board with the blank
+        tempVal = child.state[i[0]][i[1]]                           
+        child.state[i[0]][i[1]] = 0                                 
+        child.state[blankLocation[0]][blankLocation[1]] = tempVal   
 
-        children.append(child)                                      # Appends new child to child list
+        # child node is appended to the list of new childs
+        children.append(child)                                      
     return children
 
 # queueing function takes in the flag for the chosen algorithm, the current nodes in the queue, and the children nodes
@@ -131,22 +159,45 @@ def queueingFunction(flag, prevNodes, newNodes):
     global duplicates
     # iterates through the child nodes
     for i in newNodes:
-        # if the current child state in the list of child states is found in the duplicates list, take it out of the child list
+        # if the current child state is found in the duplicates list, remove it
         if i.state in duplicates:
             newNodes.remove(i)
+        # otherwise, it is a new and unique state, and should be added to the duplicates list
         else:
             duplicates.append(i.state)
+    # enters if uniform cost search is selected
     if flag == 1:
+        # takes the new nodes, and adds them to the queue
         prevNodes.concat(newNodes)
         return prevNodes
+    # enters if A* with misplaced tiles is selected
     elif flag == 2:
+        # loops through the child nodes, and calculates the misplaced tile for each node. The calculated value is added as an attribute to the node
         for j in newNodes:
             j.misplacedTile()
+            # calcF sums the g(n) and h(n) to get the f(n) of the misplaced tile heuristic
             j.calcF()
+        # the child node list is added to the nodes queue
         prevNodes.concat(newNodes)
+        # the entire list is sorted by f(n). The front of the queue has the best possible f(n) value
         prevNodes.queue.sort(key=lambda j: j.f, reverse=True)
+        # winnerF contains the best possible f(n) value at the time
+        winnerF = (prevNodes.queue[-1]).f
+        # new list is created to contain all of the ties between the best f(n) values
+        tieBreakers = []
+        for k in reversed(prevNodes.queue):
+            if k.f == winnerF:
+                tieBreakers.append(prevNodes.queue.pop())
+            else:
+                break
+        # this new set is sorted by depth value, having now the front of the list with the lowest depth
+        tieBreakers.sort(key=lambda j: j.g, reverse=True)
+        # the new set is concatinated back onto the original
+        prevNodes.queue = prevNodes.queue + tieBreakers
         return prevNodes
+    # enters if A* with Manhattan Distance is selected
     elif flag == 3:
+    # same structure of code takes place in A* misplaced tiles
         for j in newNodes:
             j.manhattanDistance()
             j.calcF()       
@@ -177,8 +228,8 @@ def generalSearch(Problem, queueingFunctionFlag):
     while nodes:                                                                
         # pops the top of the queue off and uses that as the current node, this node is also the most efficientg
         currNode = nodes.queue.pop()                                            
-        print("currNode:")
-        currNode.printBoard()
+        # print("currNode:")
+        # currNode.printBoard()
         # checks the current node's state, enters conditional if it is the goal state
         if Problem.goalTest(currNode.state):
             print("Found the goal state!")
